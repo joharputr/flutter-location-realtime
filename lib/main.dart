@@ -1,4 +1,5 @@
-import 'package:background_proccess/background_proccess.dart';
+import 'package:background_proccess/alarm_manager.dart';
+import 'package:background_proccess/cron.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -67,8 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => const BackgroundProcess()));
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const Cron()));
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
@@ -87,7 +88,7 @@ void checkPermission() async {
     await [
       Permission.location,
       Permission.notification,
-      Permission.activityRecognition
+      Permission.activityRecognition,
     ].request();
   }
 
