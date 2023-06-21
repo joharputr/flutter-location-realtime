@@ -50,7 +50,6 @@ dev_dependencies:
   flutter_local_notifications: ^14.0.1
   geolocator: ^9.0.2
   permission_handler: ^10.2.0
-  flutter_background_geolocation: ^4.11.0
   workmanager: ^0.5.1
   android_alarm_manager_plus: ^3.0.1
   cron: ^0.5.1

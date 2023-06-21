@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -176,48 +174,6 @@ void onStart(ServiceInstance service) async {
     }
   }
 
-  //
-  @pragma('vm:entry-point')
-  geolocatorBackground() {
-    ////
-    // 1.  Listen to events (See docs for all 12 available events).
-    //
-
-    // Fired whenever a location is recorded
-    bg.BackgroundGeolocation.onLocation((bg.Location location) {
-      print('ceklocation - $location');
-    });
-
-    // Fired whenever the plugin changes motion-state (stationary->moving and vice-versa)
-    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      print('cekmotionchange - $location');
-    });
-
-    // Fired whenever the state of location-services changes.  Always fired at boot
-    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
-      print('cekproviderchange - $event');
-    });
-
-    ////
-    // 2.  Configure the plugin
-    //
-    bg.BackgroundGeolocation.ready(bg.Config(
-            desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-            distanceFilter: 10.0,
-            stopOnTerminate: false,
-            startOnBoot: true,
-            debug: true,
-            logLevel: bg.Config.LOG_LEVEL_VERBOSE))
-        .then((bg.State state) {
-      if (!state.enabled) {
-        ////
-        // 3.  Start the plugin.
-        //
-        bg.BackgroundGeolocation.start();
-      }
-    });
-  }
-
   // bring to foreground
   Timer.periodic(const Duration(seconds: 10), (timer) async {
     if (service is AndroidServiceInstance) {
@@ -277,70 +233,76 @@ class _MyAppState extends State<BackgroundProcess> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Service App'),
-        ),
-        body: Column(
-          children: [
-            StreamBuilder<Map<String, dynamic>?>(
-              stream: FlutterBackgroundService().on('update'),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
+      home: WillPopScope(
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Service App'),
+            ),
+            body: Column(
+              children: [
+                StreamBuilder<Map<String, dynamic>?>(
+                  stream: FlutterBackgroundService().on('update'),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
 
-                final data = snapshot.data!;
-                String? device = data["device"];
-                DateTime? date = DateTime.tryParse(data["current_date"]);
-                return Column(
-                  children: [
-                    Text(device ?? 'Unknown'),
-                    Text(date.toString()),
-                  ],
-                );
-              },
-            ),
-            ElevatedButton(
-              child: const Text("Foreground Mode"),
-              onPressed: () {
-                FlutterBackgroundService().invoke("setAsForeground");
-              },
-            ),
-            ElevatedButton(
-              child: const Text("Background Mode"),
-              onPressed: () {
-                FlutterBackgroundService().invoke("setAsBackground");
-              },
-            ),
-            ElevatedButton(
-              child: Text(text),
-              onPressed: () async {
-                final service = FlutterBackgroundService();
-                var isRunning = await service.isRunning();
-                if (isRunning) {
-                  service.invoke("stopService");
-                } else {
-                  service.startService();
-                }
+                    final data = snapshot.data!;
+                    String? device = data["device"];
+                    DateTime? date = DateTime.tryParse(data["current_date"]);
+                    return Column(
+                      children: [
+                        Text(device ?? 'Unknown'),
+                        Text(date.toString()),
+                      ],
+                    );
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text("Foreground Mode"),
+                  onPressed: () {
+                    FlutterBackgroundService().invoke("setAsForeground");
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text("Background Mode"),
+                  onPressed: () {
+                    FlutterBackgroundService().invoke("setAsBackground");
+                  },
+                ),
+                ElevatedButton(
+                  child: Text(text),
+                  onPressed: () async {
+                    final service = FlutterBackgroundService();
+                    var isRunning = await service.isRunning();
+                    if (isRunning) {
+                      service.invoke("stopService");
+                    } else {
+                      service.startService();
+                    }
 
-                if (!isRunning) {
-                  text = 'Stop Service';
-                } else {
-                  text = 'Start Service';
-                }
-                setState(() {});
-              },
+                    if (!isRunning) {
+                      text = 'Stop Service';
+                    } else {
+                      text = 'Start Service';
+                    }
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          child: const Icon(Icons.play_arrow),
-        ),
-      ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () {},
+              child: const Icon(Icons.play_arrow),
+            ),
+          ),
+          onWillPop: () async {
+            print("kasinini");
+
+            return false;
+          }),
     );
   }
 }

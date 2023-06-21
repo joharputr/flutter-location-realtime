@@ -4,9 +4,6 @@ buildscript {
         compileSdkVersion = 31                // or higher
         targetSdkVersion = 31                // or higher
         appCompatVersion = "1.4.2"           // or higher
-        playServicesLocationVersion = "21.0.1"
-        hmsLocationVersion  = "6.9.0.300"
-        removeBackgroundGeolocationDebugSoundsInRelease = false
     }
     repositories {
         google()
@@ -23,14 +20,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven {
-            // [required] flutter_background_geolocation
-            url "${project(':flutter_background_geolocation').projectDir}/libs"
-        }
-        maven {
-            // [required] background_fetch
-            url "${project(':background_fetch').projectDir}/libs"
-        }
     }
 }
 
