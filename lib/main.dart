@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:background_proccess/background_proccess.dart';
-import 'package:background_proccess/not_found_page.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() {
@@ -15,71 +18,72 @@ class MyApp2 extends StatefulWidget {
 }
 
 class _MyApp2State extends State<MyApp2> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    checkPermissionLocation();
+    checkDeviceInfo();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Builder(
-        builder: (context) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text("widget.title"),
+      home: Builder(builder: (context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text("widget.title"),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'You have pushed the button this many times:',
+                ),
+                Text(
+                  "",
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ],
             ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Text(
-                    'You have pushed the button this many times:',
-                  ),
-                  Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const BackgroundProcess()));
-              },
-              tooltip: 'Increment',
-              child: const Icon(Icons.add),
-            ), // This trailing comma makes auto-formatting nicer for build methods.
-          );
-        }
-      ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const BackgroundProcess()));
+            },
+            tooltip: 'Increment',
+            child: const Icon(Icons.add),
+          ), // This trailing comma makes auto-formatting nicer for build methods.
+        );
+      }),
     );
+  }
+
+  Future<void> checkDeviceInfo() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    if (Platform.isAndroid) {
+      if (androidInfo.version.sdkInt < 26) {
+        await Geolocator.getCurrentPosition();
+        checkPermission();
+      } else {
+        checkPermissionLocation();
+      }
+    }
+
   }
 }
 
 void checkPermission() async {
   var location = await Permission.location.status;
   var notification = await Permission.notification.status;
-  var activityRecognintion = await Permission.activityRecognition.status;
-  if (location.isDenied ||
-      notification.isDenied ||
-      activityRecognintion.isDenied) {
-    print(
-        "permCehck1 = ${location.isGranted} , ${notification.isGranted} ${activityRecognintion.isGranted}");
+  if (location.isDenied || notification.isDenied) {
+    print("permCehck1 = ${location.isGranted} , ${notification.isGranted} ");
 
     await [
       Permission.notification,
-      Permission.activityRecognition,
     ].request();
   }
 

@@ -139,6 +139,7 @@ void onStart(ServiceInstance service) async {
       //device must move horizontally before an update event is generated;
     );
 
+    //berubah setiap ganti location
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) {
@@ -166,6 +167,7 @@ void onStart(ServiceInstance service) async {
         haspermission = true;
       }
 
+      print("hasPermission = $haspermission");
       if (haspermission) {
         getLocation();
       }
@@ -205,6 +207,8 @@ class BackgroundProcess extends StatefulWidget {
 
 class _MyAppState extends State<BackgroundProcess> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
+  String latitudeTemp = "";
+  String longitudeTemp = "";
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -249,13 +253,20 @@ class _MyAppState extends State<BackgroundProcess> with WidgetsBindingObserver {
                       );
                     }
 
+                    Geolocator.getCurrentPosition(
+                            desiredAccuracy: LocationAccuracy.high)
+                        .then((value) {
+                      latitudeTemp = value.longitude.toString();
+                      longitudeTemp = value.latitude.toString();
+                    });
+
                     final data = snapshot.data!;
                     String? device = data["device"];
                     DateTime? date = DateTime.tryParse(data["current_date"]);
                     return Column(
                       children: [
-                        Text(device ?? 'Unknown'),
-                        Text(date.toString()),
+                        Text("Latitude = ${latitudeTemp}"),
+                        Text("Longitude = ${longitudeTemp}"),
                       ],
                     );
                   },
