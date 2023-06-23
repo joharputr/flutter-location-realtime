@@ -53,6 +53,10 @@ dev_dependencies:
   workmanager: ^0.5.1
   android_alarm_manager_plus: ^3.0.1
   cron: ^0.5.1
+  path_provider: ^2.0.15
+  dio: ^5.2.1+1
+  signature: ^5.4.0
+  fluttertoast: ^8.2.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
