@@ -54,6 +54,12 @@ dev_dependencies:
   android_alarm_manager_plus: ^3.0.1
   cron: ^0.5.1
   device_info_plus: ^9.0.2
+  path_provider: ^2.0.15
+  dio: ^5.2.1+1
+  signature: ^5.4.0
+  fluttertoast: ^8.2.2
+  qr_code_scanner: ^1.0.1
+  url_launcher: ^6.1.11
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
