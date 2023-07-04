@@ -1,11 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'main.dart';
+
+final dio = Dio();
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
@@ -41,8 +49,8 @@ Future<void> initializeService() async {
       onStart: onStart,
 
       // auto start service
-      autoStart: false,
-      isForegroundMode: false,
+      autoStart: true,
+      isForegroundMode: true,
       notificationChannelId: 'my_foreground',
       initialNotificationTitle: 'AWESOME SERVICE',
       initialNotificationContent: 'Initializing',
@@ -76,6 +84,7 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
+  HttpClient client = HttpClient();
   bool servicestatus = false;
   bool haspermission = false;
   late LocationPermission permission;
@@ -109,25 +118,40 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
+  void postData() async {
+    Map<String, String> data = {};
+
+    //check bad certificate
+    HttpOverrides.global = MyHttpOverrides();
+    data.addAll(
+        {'username': '001', 'password': 'secret', 'companyCode': 'EDV'});
+    dio.interceptors.add(LogInterceptor(responseBody: true));
+    await dio.post("https://103.145.82.230:8243/q/global/login", data: data);
+  }
+
   getLocation() async {
     position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
     print("lattt = " + position.longitude.toString()); //Output: 80.24599079
     print("longggg = " + position.latitude.toString()); //Output: 29.6593457
 
-    flutterLocalNotificationsPlugin.show(
-      888,
-      'COOL SERVICE',
-      'Latitude = ${position.latitude} Longitude = ${position.longitude}',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'my_foreground',
-          'MY FOREGROUND SERVICE',
-          icon: 'ic_bg_service_small',
-          ongoing: true,
+    placemarkFromCoordinates(position.latitude, position.longitude)
+        .then((value) {
+      postData();
+      print("valueee = $value");
+      flutterLocalNotificationsPlugin.show(
+        888,
+        'COOL SERVICE',
+        'Latitude = ${position.latitude} \nLongitude = ${position.longitude} \n${value[0].street.toString()}',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+              'my_foreground', 'MY FOREGROUND SERVICE',
+              icon: 'ic_bg_service_small',
+              ongoing: true,
+              styleInformation: BigTextStyleInformation('')),
         ),
-      ),
-    );
+      );
+    });
 
     long = position.longitude.toString();
     lat = position.latitude.toString();
@@ -207,6 +231,7 @@ class BackgroundProcess extends StatefulWidget {
 class _MyAppState extends State<BackgroundProcess> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
   String latitudeTemp = "";
+  String addressTemp = "";
   String longitudeTemp = "";
 
   @override
@@ -243,33 +268,60 @@ class _MyAppState extends State<BackgroundProcess> with WidgetsBindingObserver {
             ),
             body: Column(
               children: [
-                StreamBuilder<Map<String, dynamic>?>(
-                  stream: FlutterBackgroundService().on('update'),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
+                // StreamBuilder<Map<String, dynamic>?>(
+                //   stream: FlutterBackgroundService().on('update'),
+                //   builder: (context, snapshot) {
+                //     if (!snapshot.hasData) {
+                //       return const Center(
+                //         child: CircularProgressIndicator(),
+                //       );
+                //     }
+                //
+                //     Geolocator.getCurrentPosition(
+                //             desiredAccuracy: LocationAccuracy.high)
+                //         .then((value) {
+                //       placemarkFromCoordinates(value.latitude, value.longitude)
+                //           .then((value) {
+                //         print("valueee = $value");
+                //         addressTemp = value[0].street.toString();
+                //       });
+                //       latitudeTemp = value.longitude.toString();
+                //       longitudeTemp = value.latitude.toString();
+                //     });
+                //
+                //     final data = snapshot.data!;
+                //     String? device = data["device"];
+                //     DateTime? date = DateTime.tryParse(data["current_date"]);
+                //     return Column(
+                //       children: [
+                //         Text("Latitude = ${latitudeTemp}"),
+                //         Text("Longitude = ${longitudeTemp}"),
+                //         Text("Address = ${addressTemp}"),
+                //       ],
+                //     );
+                //   },
+                // ),
 
-                    Geolocator.getCurrentPosition(
-                            desiredAccuracy: LocationAccuracy.high)
-                        .then((value) {
-                      latitudeTemp = value.longitude.toString();
-                      longitudeTemp = value.latitude.toString();
-                    });
-
-                    final data = snapshot.data!;
-                    String? device = data["device"];
-                    DateTime? date = DateTime.tryParse(data["current_date"]);
-                    return Column(
-                      children: [
-                        Text("Latitude = ${latitudeTemp}"),
-                        Text("Longitude = ${longitudeTemp}"),
-                      ],
-                    );
-                  },
-                ),
+                FutureBuilder(
+                    future: Geolocator.getCurrentPosition(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else {
+                        placemarkFromCoordinates(snapshot.data!.latitude,
+                                snapshot.data!.longitude)
+                            .then((value) {});
+                        return Column(
+                          children: [
+                            Text("Latitude = ${snapshot.data?.latitude}"),
+                            Text("Longitude = ${snapshot.data?.longitude}"),
+                            //        Text("Address = ${addressTemp}"),
+                          ],
+                        );
+                      }
+                    }),
                 ElevatedButton(
                   child: const Text("Foreground Mode"),
                   onPressed: () {

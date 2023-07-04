@@ -8,10 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        final isValidHost =
+        ["103.145.82.230"].contains(host); // <-- allow only hosts in array
+        return isValidHost;
+      };
+  }
+  }
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
-  runApp(const MyApp2());
+  runApp( MyApp2());
 }
 
 class MyApp2 extends StatefulWidget {
@@ -92,7 +103,7 @@ class _MyApp2State extends State<MyApp2> {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const QRScanner()));
+                  builder: (context) => const BackgroundProcess()));
             },
             tooltip: 'Increment',
             child: const Icon(Icons.add),
